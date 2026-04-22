@@ -1,78 +1,68 @@
 """
 Бот «Дирижёр» — приём заявок от экспертов
 Юлия Абрамова | продюсер онлайн-запусков
-
-Установка:
-    pip install aiogram==3.4.1
-
-Запуск:
-    python bot.py
-
-Настройка: отредактируйте секцию CONFIG ниже.
+aiogram 2.x
 """
 
-import asyncio
 import logging
-from aiogram import Bot, Dispatcher, F
-from aiogram.types import (
-    Message, CallbackQuery,
-    InlineKeyboardMarkup, InlineKeyboardButton
-)
-from aiogram.filters import CommandStart
-from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State, StatesGroup
-from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram import Bot, Dispatcher, executor, types
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
 # ═══════════════════════════════════════
-# CONFIG — замените на свои значения
+# CONFIG
 # ═══════════════════════════════════════
-BOT_TOKEN = "8720204374:AAF_VjXBdq1pBYfbJFo-4UuyVcth2pr2bRI"  # токен от BotFather
-ADMIN_CHAT_ID = 346125335                                        # Yulia Abramova
-ADMIN_USERNAME = "@abramova_juli"                                # ваш @ник для финального сообщения
+BOT_TOKEN     = "8720204374:AAF_VjXBdq1pBYfbJFo-4UuyVcth2pr2bRI"
+ADMIN_CHAT_ID = 346125335
+ADMIN_USERNAME = "@abramova_juli"
 # ═══════════════════════════════════════
 
 logging.basicConfig(level=logging.INFO)
 
-bot = Bot(token=BOT_TOKEN)
-dp = Dispatcher(storage=MemoryStorage())
+bot     = Bot(token=BOT_TOKEN, parse_mode=types.ParseMode.HTML)
+storage = MemoryStorage()
+dp      = Dispatcher(bot, storage=storage)
 
 
 # ─────────────────────────────────────────
-# Состояния FSM (шаги анкеты)
+# FSM — шаги анкеты
 # ─────────────────────────────────────────
 class Form(StatesGroup):
-    q1_name        = State()   # Как зовут?
-    q2_profession  = State()   # Чем занимаешься?
-    q3_income      = State()   # Текущий доход — кнопки
-    q4_goal        = State()   # Цель дохода — текст
-    q5_strengths   = State()   # Сильные стороны — текст
-    q6_teach       = State()   # Обучаешь? — кнопки
-    q7_segment     = State()   # Сегмент клиентов — кнопки
-    q7_segment_det = State()   # Уточнение сегмента — текст (если выбрал Да)
-    q8_social      = State()   # Соцсети — текст
-    q9_online      = State()   # Опыт онлайн-продаж — кнопки
-    q9_online_det  = State()   # Уточнение онлайн — текст (если был опыт)
-    q10_time       = State()   # Часы в неделю — кнопки
-    q11_budget     = State()   # Бюджет — кнопки
-    q12_why        = State()   # Мотивация — текст
-    q13_priority   = State()   # Приоритет — кнопки
+    q1_name        = State()
+    q2_profession  = State()
+    q3_income      = State()
+    q4_goal        = State()
+    q5_strengths   = State()
+    q6_teach       = State()
+    q7_segment     = State()
+    q7_segment_det = State()
+    q8_social      = State()
+    q9_online      = State()
+    q9_online_det  = State()
+    q10_time       = State()
+    q11_budget     = State()
+    q12_why        = State()
+    q13_priority   = State()
 
 
 # ─────────────────────────────────────────
 # Вспомогательная функция: клавиатура
 # ─────────────────────────────────────────
-def kb(*buttons: tuple[str, str]) -> InlineKeyboardMarkup:
-    """Создаёт InlineKeyboard из списка (текст, callback_data)."""
-    rows = [[InlineKeyboardButton(text=t, callback_data=d)] for t, d in buttons]
-    return InlineKeyboardMarkup(inline_keyboard=rows)
+def kb(*buttons):
+    markup = InlineKeyboardMarkup(row_width=1)
+    for text, data in buttons:
+        markup.add(InlineKeyboardButton(text=text, callback_data=data))
+    return markup
 
 
 # ═══════════════════════════════════════
 # БЛОК 0 — СТАРТ
 # ═══════════════════════════════════════
-@dp.message(CommandStart())
-async def cmd_start(message: Message, state: FSMContext):
-    await state.clear()
+@dp.message_handler(commands=["start"], state="*")
+async def cmd_start(message: types.Message, state: FSMContext):
+    await state.finish()
     await message.answer(
         "Привет! 👋\n\n"
         "Я — бот Юлии Абрамовой, продюсера онлайн-запусков.\n\n"
@@ -89,8 +79,8 @@ async def cmd_start(message: Message, state: FSMContext):
     )
 
 
-@dp.callback_query(F.data == "start_info")
-async def cb_start_info(cq: CallbackQuery):
+@dp.callback_query_handler(lambda c: c.data == "start_info", state="*")
+async def cb_start_info(cq: types.CallbackQuery):
     await cq.message.edit_text(
         "Юлия работает с экспертами из мягких ниш — красота, здоровье, творчество, "
         "образование, психология, коучинг.\n\n"
@@ -111,8 +101,8 @@ async def cb_start_info(cq: CallbackQuery):
     await cq.answer()
 
 
-@dp.callback_query(F.data == "start_back")
-async def cb_start_back(cq: CallbackQuery):
+@dp.callback_query_handler(lambda c: c.data == "start_back", state="*")
+async def cb_start_back(cq: types.CallbackQuery):
     await cq.message.edit_text(
         "Привет! 👋\n\n"
         "Я — бот Юлии Абрамовой, продюсера онлайн-запусков.\n\n"
@@ -127,9 +117,9 @@ async def cb_start_back(cq: CallbackQuery):
     await cq.answer()
 
 
-@dp.callback_query(F.data == "start_yes")
-async def cb_start_yes(cq: CallbackQuery, state: FSMContext):
-    await state.set_state(Form.q1_name)
+@dp.callback_query_handler(lambda c: c.data == "start_yes", state="*")
+async def cb_start_yes(cq: types.CallbackQuery):
+    await Form.q1_name.set()
     await cq.message.edit_text(
         "Блок 1 из 5 — Базовая информация\n\n"
         "Вопрос 1 / 13\n\n"
@@ -141,11 +131,11 @@ async def cb_start_yes(cq: CallbackQuery, state: FSMContext):
 # ═══════════════════════════════════════
 # БЛОК 1 — БАЗОВАЯ ИНФОРМАЦИЯ
 # ═══════════════════════════════════════
-@dp.message(Form.q1_name)
-async def q1_handler(message: Message, state: FSMContext):
+@dp.message_handler(state=Form.q1_name)
+async def q1_handler(message: types.Message, state: FSMContext):
     name = message.text.strip()
     await state.update_data(name=name)
-    await state.set_state(Form.q2_profession)
+    await Form.q2_profession.set()
     await message.answer(
         f"Отлично, {name}! 👍\n\n"
         f"Вопрос 2 / 13\n\n"
@@ -154,10 +144,10 @@ async def q1_handler(message: Message, state: FSMContext):
     )
 
 
-@dp.message(Form.q2_profession)
-async def q2_handler(message: Message, state: FSMContext):
+@dp.message_handler(state=Form.q2_profession)
+async def q2_handler(message: types.Message, state: FSMContext):
     await state.update_data(profession=message.text.strip())
-    await state.set_state(Form.q3_income)
+    await Form.q3_income.set()
     await message.answer(
         "Вопрос 3 / 13\n\n"
         "Какой у тебя сейчас примерный доход в месяц?",
@@ -171,8 +161,8 @@ async def q2_handler(message: Message, state: FSMContext):
     )
 
 
-@dp.callback_query(Form.q3_income)
-async def q3_handler(cq: CallbackQuery, state: FSMContext):
+@dp.callback_query_handler(lambda c: c.data.startswith("inc_"), state=Form.q3_income)
+async def q3_handler(cq: types.CallbackQuery, state: FSMContext):
     labels = {
         "inc_1": "до 50 000 ₽",
         "inc_2": "50 000 – 100 000 ₽",
@@ -181,7 +171,7 @@ async def q3_handler(cq: CallbackQuery, state: FSMContext):
         "inc_5": "от 400 000 ₽",
     }
     await state.update_data(income=labels[cq.data])
-    await state.set_state(Form.q4_goal)
+    await Form.q4_goal.set()
     await cq.message.edit_text(
         "Вопрос 4 / 13\n\n"
         "А к какому доходу хочешь прийти — и за какой срок?\n\n"
@@ -190,10 +180,10 @@ async def q3_handler(cq: CallbackQuery, state: FSMContext):
     await cq.answer()
 
 
-@dp.message(Form.q4_goal)
-async def q4_handler(message: Message, state: FSMContext):
+@dp.message_handler(state=Form.q4_goal)
+async def q4_handler(message: types.Message, state: FSMContext):
     await state.update_data(goal=message.text.strip())
-    await state.set_state(Form.q5_strengths)
+    await Form.q5_strengths.set()
     await message.answer(
         "Блок 2 из 5 — Экспертиза\n\n"
         "Вопрос 5 / 13\n\n"
@@ -205,10 +195,10 @@ async def q4_handler(message: Message, state: FSMContext):
 # ═══════════════════════════════════════
 # БЛОК 2 — ЭКСПЕРТИЗА
 # ═══════════════════════════════════════
-@dp.message(Form.q5_strengths)
-async def q5_handler(message: Message, state: FSMContext):
+@dp.message_handler(state=Form.q5_strengths)
+async def q5_handler(message: types.Message, state: FSMContext):
     await state.update_data(strengths=message.text.strip())
-    await state.set_state(Form.q6_teach)
+    await Form.q6_teach.set()
     await message.answer(
         "Вопрос 6 / 13\n\n"
         "Говорили ли тебе, что тебе стоит учить других или что ты хорошо объясняешь?",
@@ -221,8 +211,8 @@ async def q5_handler(message: Message, state: FSMContext):
     )
 
 
-@dp.callback_query(Form.q6_teach)
-async def q6_handler(cq: CallbackQuery, state: FSMContext):
+@dp.callback_query_handler(lambda c: c.data.startswith("teach_"), state=Form.q6_teach)
+async def q6_handler(cq: types.CallbackQuery, state: FSMContext):
     labels = {
         "teach_1": "Да, часто слышу это",
         "teach_2": "Иногда говорят",
@@ -230,7 +220,7 @@ async def q6_handler(cq: CallbackQuery, state: FSMContext):
         "teach_4": "Уже обучаю учеников",
     }
     await state.update_data(teach=labels[cq.data])
-    await state.set_state(Form.q7_segment)
+    await Form.q7_segment.set()
     await cq.message.edit_text(
         "Вопрос 7 / 13\n\n"
         "Есть ли у тебя особый сегмент клиентов — "
@@ -245,8 +235,8 @@ async def q6_handler(cq: CallbackQuery, state: FSMContext):
     await cq.answer()
 
 
-@dp.callback_query(Form.q7_segment)
-async def q7_handler(cq: CallbackQuery, state: FSMContext):
+@dp.callback_query_handler(lambda c: c.data.startswith("seg_"), state=Form.q7_segment)
+async def q7_handler(cq: types.CallbackQuery, state: FSMContext):
     labels = {
         "seg_vip":    "Да, работаю с vip / премиум",
         "seg_narrow": "Да, есть узкая специализация",
@@ -257,13 +247,14 @@ async def q7_handler(cq: CallbackQuery, state: FSMContext):
     await state.update_data(segment=choice)
 
     if cq.data in ("seg_vip", "seg_narrow"):
-        await state.set_state(Form.q7_segment_det)
+        await Form.q7_segment_det.set()
         await cq.message.edit_text(
-            "Расскажи подробнее — кто эти клиенты и чем твоя работа с ними отличается?"
+            "Расскажи подробнее — кто эти клиенты и "
+            "чем твоя работа с ними отличается?"
         )
     else:
         await state.update_data(segment_detail="—")
-        await state.set_state(Form.q8_social)
+        await Form.q8_social.set()
         await cq.message.edit_text(
             "Блок 3 из 5 — Онлайн и соцсети\n\n"
             "Вопрос 8 / 13\n\n"
@@ -273,10 +264,10 @@ async def q7_handler(cq: CallbackQuery, state: FSMContext):
     await cq.answer()
 
 
-@dp.message(Form.q7_segment_det)
-async def q7_det_handler(message: Message, state: FSMContext):
+@dp.message_handler(state=Form.q7_segment_det)
+async def q7_det_handler(message: types.Message, state: FSMContext):
     await state.update_data(segment_detail=message.text.strip())
-    await state.set_state(Form.q8_social)
+    await Form.q8_social.set()
     await message.answer(
         "Блок 3 из 5 — Онлайн и соцсети\n\n"
         "Вопрос 8 / 13\n\n"
@@ -288,10 +279,10 @@ async def q7_det_handler(message: Message, state: FSMContext):
 # ═══════════════════════════════════════
 # БЛОК 3 — ОНЛАЙН И СОЦСЕТИ
 # ═══════════════════════════════════════
-@dp.message(Form.q8_social)
-async def q8_handler(message: Message, state: FSMContext):
+@dp.message_handler(state=Form.q8_social)
+async def q8_handler(message: types.Message, state: FSMContext):
     await state.update_data(social=message.text.strip())
-    await state.set_state(Form.q9_online)
+    await Form.q9_online.set()
     await message.answer(
         "Вопрос 9 / 13\n\n"
         "Был ли у тебя опыт онлайн-продаж — курсы, консультации, мастер-классы?",
@@ -304,8 +295,8 @@ async def q8_handler(message: Message, state: FSMContext):
     )
 
 
-@dp.callback_query(Form.q9_online)
-async def q9_handler(cq: CallbackQuery, state: FSMContext):
+@dp.callback_query_handler(lambda c: c.data.startswith("online_"), state=Form.q9_online)
+async def q9_handler(cq: types.CallbackQuery, state: FSMContext):
     labels = {
         "online_yes":   "Да, продавал(а) онлайн — есть опыт",
         "online_fail":  "Пробовал(а), но не пошло",
@@ -316,13 +307,13 @@ async def q9_handler(cq: CallbackQuery, state: FSMContext):
     await state.update_data(online_exp=choice)
 
     if cq.data in ("online_yes", "online_fail"):
-        await state.set_state(Form.q9_online_det)
+        await Form.q9_online_det.set()
         await cq.message.edit_text(
             "Что продавал(а) и что сработало / не сработало? Расскажи коротко."
         )
     else:
         await state.update_data(online_detail="—")
-        await state.set_state(Form.q10_time)
+        await Form.q10_time.set()
         await cq.message.edit_text(
             "Блок 4 из 5 — Ресурсы\n\n"
             "Вопрос 10 / 13\n\n"
@@ -338,10 +329,10 @@ async def q9_handler(cq: CallbackQuery, state: FSMContext):
     await cq.answer()
 
 
-@dp.message(Form.q9_online_det)
-async def q9_det_handler(message: Message, state: FSMContext):
+@dp.message_handler(state=Form.q9_online_det)
+async def q9_det_handler(message: types.Message, state: FSMContext):
     await state.update_data(online_detail=message.text.strip())
-    await state.set_state(Form.q10_time)
+    await Form.q10_time.set()
     await message.answer(
         "Блок 4 из 5 — Ресурсы\n\n"
         "Вопрос 10 / 13\n\n"
@@ -359,8 +350,8 @@ async def q9_det_handler(message: Message, state: FSMContext):
 # ═══════════════════════════════════════
 # БЛОК 4 — РЕСУРСЫ
 # ═══════════════════════════════════════
-@dp.callback_query(Form.q10_time)
-async def q10_handler(cq: CallbackQuery, state: FSMContext):
+@dp.callback_query_handler(lambda c: c.data.startswith("time_"), state=Form.q10_time)
+async def q10_handler(cq: types.CallbackQuery, state: FSMContext):
     labels = {
         "time_1": "До 3 часов в неделю",
         "time_2": "3–7 часов в неделю",
@@ -368,7 +359,7 @@ async def q10_handler(cq: CallbackQuery, state: FSMContext):
         "time_4": "Готов(а) погружаться полностью",
     }
     await state.update_data(time_per_week=labels[cq.data])
-    await state.set_state(Form.q11_budget)
+    await Form.q11_budget.set()
     await cq.message.edit_text(
         "Вопрос 11 / 13\n\n"
         "Есть ли стартовый бюджет на развитие проекта?",
@@ -382,8 +373,8 @@ async def q10_handler(cq: CallbackQuery, state: FSMContext):
     await cq.answer()
 
 
-@dp.callback_query(Form.q11_budget)
-async def q11_handler(cq: CallbackQuery, state: FSMContext):
+@dp.callback_query_handler(lambda c: c.data.startswith("bud_"), state=Form.q11_budget)
+async def q11_handler(cq: types.CallbackQuery, state: FSMContext):
     labels = {
         "bud_0": "Пока без вложений",
         "bud_1": "До 30 000 ₽",
@@ -391,7 +382,7 @@ async def q11_handler(cq: CallbackQuery, state: FSMContext):
         "bud_3": "От 100 000 ₽",
     }
     await state.update_data(budget=labels[cq.data])
-    await state.set_state(Form.q12_why)
+    await Form.q12_why.set()
     await cq.message.edit_text(
         "Блок 5 из 5 — Мотивация\n\n"
         "Вопрос 12 / 13\n\n"
@@ -403,10 +394,10 @@ async def q11_handler(cq: CallbackQuery, state: FSMContext):
 # ═══════════════════════════════════════
 # БЛОК 5 — МОТИВАЦИЯ
 # ═══════════════════════════════════════
-@dp.message(Form.q12_why)
-async def q12_handler(message: Message, state: FSMContext):
+@dp.message_handler(state=Form.q12_why)
+async def q12_handler(message: types.Message, state: FSMContext):
     await state.update_data(why_now=message.text.strip())
-    await state.set_state(Form.q13_priority)
+    await Form.q13_priority.set()
     await message.answer(
         "Вопрос 13 / 13 — последний! 🎉\n\n"
         "И последнее — что для тебя самое важное в этом проекте?",
@@ -420,8 +411,8 @@ async def q12_handler(message: Message, state: FSMContext):
     )
 
 
-@dp.callback_query(Form.q13_priority)
-async def q13_handler(cq: CallbackQuery, state: FSMContext):
+@dp.callback_query_handler(lambda c: c.data.startswith("pri_"), state=Form.q13_priority)
+async def q13_handler(cq: types.CallbackQuery, state: FSMContext):
     labels = {
         "pri_money":     "Больше денег",
         "pri_freedom":   "Свобода и гибкий график",
@@ -430,7 +421,6 @@ async def q13_handler(cq: CallbackQuery, state: FSMContext):
         "pri_all":       "Всё вместе",
     }
     await state.update_data(priority=labels[cq.data])
-
     data = await state.get_data()
     name = data.get("name", "Эксперт")
 
@@ -444,10 +434,9 @@ async def q13_handler(cq: CallbackQuery, state: FSMContext):
         f"До скорого! 🤝"
     )
 
-    # ─── Системное уведомление Юлии ─────────────────────────────
+    # ─── Уведомление Юлии ───────────────────────────────────────
     user = cq.from_user
-    user_link = f"tg://user?id={user.id}"
-    mention = f'<a href="{user_link}">{user.full_name}</a>'
+    user_link = f'<a href="tg://user?id={user.id}">{user.full_name}</a>'
 
     summary = (
         f"🎼 <b>Новая заявка от эксперта</b>\n\n"
@@ -466,25 +455,21 @@ async def q13_handler(cq: CallbackQuery, state: FSMContext):
         f"<b>Бюджет:</b> {data.get('budget', '—')}\n"
         f"<b>Мотивация:</b> {data.get('why_now', '—')}\n"
         f"<b>Приоритет:</b> {data.get('priority', '—')}\n\n"
-        f"→ Профиль в Telegram: {mention}\n"
-        f"→ username: @{user.username or '—'}"
+        f"→ В Telegram: {user_link}\n"
+        f"→ @{user.username or '—'}"
     )
 
-    if ADMIN_CHAT_ID:
-        try:
-            await bot.send_message(ADMIN_CHAT_ID, summary, parse_mode="HTML")
-        except Exception as e:
-            logging.error(f"Не удалось отправить уведомление: {e}")
+    try:
+        await bot.send_message(ADMIN_CHAT_ID, summary)
+    except Exception as e:
+        logging.error(f"Ошибка отправки уведомления: {e}")
 
-    await state.clear()
+    await state.finish()
     await cq.answer()
 
 
 # ─────────────────────────────────────────
 # Запуск
 # ─────────────────────────────────────────
-async def main():
-    await dp.start_polling(bot)
-
 if __name__ == "__main__":
-    asyncio.run(main())
+    executor.start_polling(dp, skip_updates=True)
