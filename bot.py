@@ -378,26 +378,26 @@ async def q13_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # ─── Уведомление Юлии ───────────────────────────────────────
     user = q.from_user
     summary = (
-        f"🎼 *Новая заявка от эксперта*\n\n"
-        f"*Имя:* {d.get('name', '—')}\n"
-        f"*Профессия и опыт:* {d.get('profession', '—')}\n"
-        f"*Текущий доход:* {d.get('income', '—')}\n"
-        f"*Цель:* {d.get('goal', '—')}\n"
-        f"*Сильные стороны:* {d.get('strengths', '—')}\n"
-        f"*Обучение:* {d.get('teach', '—')}\n"
-        f"*Сегмент:* {d.get('segment', '—')}\n"
-        f"*Детали сегмента:* {d.get('segment_detail', '—')}\n"
-        f"*Соцсети:* {d.get('social', '—')}\n"
-        f"*Опыт онлайн:* {d.get('online_exp', '—')}\n"
-        f"*Детали онлайн:* {d.get('online_detail', '—')}\n"
-        f"*Время в неделю:* {d.get('time_per_week', '—')}\n"
-        f"*Бюджет:* {d.get('budget', '—')}\n"
-        f"*Мотивация:* {d.get('why_now', '—')}\n"
-        f"*Приоритет:* {d.get('priority', '—')}\n\n"
+        f"🎼 НОВАЯ ЗАЯВКА ОТ ЭКСПЕРТА\n\n"
+        f"Имя: {d.get('name', '—')}\n"
+        f"Профессия и опыт: {d.get('profession', '—')}\n"
+        f"Текущий доход: {d.get('income', '—')}\n"
+        f"Цель: {d.get('goal', '—')}\n"
+        f"Сильные стороны: {d.get('strengths', '—')}\n"
+        f"Обучение: {d.get('teach', '—')}\n"
+        f"Сегмент: {d.get('segment', '—')}\n"
+        f"Детали сегмента: {d.get('segment_detail', '—')}\n"
+        f"Соцсети: {d.get('social', '—')}\n"
+        f"Опыт онлайн: {d.get('online_exp', '—')}\n"
+        f"Детали онлайн: {d.get('online_detail', '—')}\n"
+        f"Время в неделю: {d.get('time_per_week', '—')}\n"
+        f"Бюджет: {d.get('budget', '—')}\n"
+        f"Мотивация: {d.get('why_now', '—')}\n"
+        f"Приоритет: {d.get('priority', '—')}\n\n"
         f"→ @{user.username or '—'} | {user.full_name}"
     )
     try:
-        await context.bot.send_message(ADMIN_CHAT_ID, summary, parse_mode="Markdown")
+        await context.bot.send_message(ADMIN_CHAT_ID, summary)
     except Exception as e:
         logging.error(f"Ошибка отправки уведомления: {e}")
 
