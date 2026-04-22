@@ -33,6 +33,13 @@ def kb(*rows):
 
 
 # ═══════════════════════════════════════
+# СЕРВИСНЫЕ КОМАНДЫ
+# ═══════════════════════════════════════
+async def get_my_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(f"Твой ID: {update.effective_chat.id}")
+
+
+# ═══════════════════════════════════════
 # БЛОК 0 — СТАРТ
 # ═══════════════════════════════════════
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -437,6 +444,7 @@ def main():
         fallbacks=[CommandHandler("start", start)],
     )
 
+    app.add_handler(CommandHandler("id", get_my_id))
     app.add_handler(conv)
     app.run_polling()
 
